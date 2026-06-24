@@ -1,52 +1,88 @@
 # Distributed Rate Limiter
 
-A Redis-backed distributed rate limiting service built with FastAPI and Python, implementing the Token Bucket algorithm for scalable API traffic control.
+A production-oriented distributed rate limiting service built using FastAPI, Redis, and Python.
+
+The system provides centralized request throttling for APIs and microservices using Redis-backed state management, supporting high-concurrency environments and distributed deployments.
+
+---
 
 ## Overview
 
-This project demonstrates how modern backend systems enforce request quotas and protect services from traffic spikes in distributed environments.
+This project simulates how large-scale backend systems enforce API request limits across multiple application instances.
 
-The service maintains per-user token buckets in Redis and dynamically refills tokens over time, allowing controlled request throughput while supporting horizontal scalability.
+The service is designed to:
 
-## Features
+- Prevent API abuse
+- Control traffic spikes
+- Protect downstream services
+- Improve platform reliability
+- Support distributed deployments
 
-- Token Bucket rate limiting algorithm
-- Redis-backed centralized state management
-- FastAPI REST endpoints
-- Per-user request throttling
-- Automatic token refill mechanism
-- Low-latency request processing
-- Designed for distributed deployments
-- Extensible architecture for Kubernetes and cloud environments
+The implementation leverages Redis as a centralized state store, allowing multiple application nodes to share rate limit counters consistently.
+
+---
 
 ## Architecture
 
 ```text
-Client Request
-      │
-      ▼
-FastAPI Application
-      │
-      ▼
-Token Bucket Engine
-      │
-      ▼
-Redis Storage
-      │
-      ▼
-Allow / Reject Request
+                +------------------+
+                |   Client Apps    |
+                +--------+---------+
+                         |
+                         v
+                +------------------+
+                |    FastAPI API   |
+                +--------+---------+
+                         |
+                         v
+                +------------------+
+                |      Redis       |
+                | Shared Counters  |
+                +------------------+
 ```
 
-## Tech Stack
+---
+
+## Features
+
+### Current Features
+
+- Fixed Window Rate Limiting
+- Redis-backed counter storage
+- Configurable request thresholds
+- User-based rate limiting
+- FastAPI REST API
+- Low-latency Redis operations
+
+### Planned Features
+
+- Sliding Window Algorithm
+- Token Bucket Algorithm
+- Distributed Locking
+- Dynamic Configuration
+- API Keys & Authentication
+- Prometheus Metrics
+- Grafana Dashboards
+- Docker Deployment
+- Kubernetes Deployment
+- CI/CD Integration
+- Load Testing Suite
+
+---
+
+## Technology Stack
 
 | Component | Technology |
 |------------|------------|
-| API Framework | FastAPI |
 | Language | Python 3.12 |
-| State Store | Redis |
-| Server | Uvicorn |
+| Framework | FastAPI |
+| Data Store | Redis |
+| API Server | Uvicorn |
 | Version Control | Git |
-| Package Management | pip |
+| Containerization | Docker (Planned) |
+| Orchestration | Kubernetes (Planned) |
+
+---
 
 ## Project Structure
 
@@ -55,86 +91,35 @@ distributed-rate-limiter/
 │
 ├── app/
 │   ├── main.py
-│   ├── limiter.py
 │   ├── redis_client.py
-│   └── __init__.py
+│   └── limiter.py
+│
+├── tests/
 │
 ├── requirements.txt
+│
 ├── README.md
+│
 └── .gitignore
 ```
 
-## How It Works
+---
 
-Each user receives a token bucket with:
-
-- Capacity: 10 tokens
-- Refill Rate: 1 token per second
-
-Request flow:
-
-1. User sends API request.
-2. Service retrieves bucket state from Redis.
-3. Available tokens are recalculated.
-4. If tokens exist:
-   - Request allowed
-   - Token count decremented
-5. If bucket is empty:
-   - Request rejected
-
-## API Endpoints
-
-### Health Check
-
-```http
-GET /
-```
-
-Response:
-
-```json
-{
-  "message": "Rate Limiter Running"
-}
-```
-
-### Rate Limit Check
-
-```http
-GET /check?user_id=gautam
-```
-
-Response:
-
-```json
-{
-  "user": "gautam",
-  "allowed": true
-}
-```
-
-or
-
-```json
-{
-  "user": "gautam",
-  "allowed": false
-}
-```
-
-## Local Setup
+## Installation
 
 ### Clone Repository
 
 ```bash
-git clone https://github.com/<username>/distributed-rate-limiter.git
+git clone https://github.com/YOUR_USERNAME/distributed-rate-limiter.git
+
 cd distributed-rate-limiter
 ```
 
 ### Create Virtual Environment
 
 ```bash
-python -m venv venv
+python3 -m venv venv
+
 source venv/bin/activate
 ```
 
@@ -144,25 +129,31 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Start Redis
+---
+
+## Start Redis
+
+### Mac
 
 ```bash
 brew services start redis
 ```
 
-Verify:
+### Verify
 
 ```bash
 redis-cli ping
 ```
 
-Expected:
+Expected output:
 
 ```text
 PONG
 ```
 
-### Run Application
+---
+
+## Run Application
 
 ```bash
 uvicorn app.main:app --reload
@@ -174,49 +165,107 @@ Application:
 http://127.0.0.1:8000
 ```
 
-## Example Redis State
-
-```bash
-HGETALL user:gautam
-```
+Swagger Documentation:
 
 ```text
-tokens
-7.34
-
-last_refill
-1750845123.32
+http://127.0.0.1:8000/docs
 ```
 
-## Future Improvements
+---
 
-- Atomic Redis Lua scripts
-- Sliding Window algorithm
-- Distributed worker support
-- Docker containerization
-- Kubernetes deployment
-- Prometheus metrics
-- Grafana dashboards
-- CI/CD pipeline using GitHub Actions
-- Load testing with Locust
+## Example Request
 
-## Engineering Concepts Demonstrated
+```bash
+curl "http://127.0.0.1:8000/check?user_id=gautam"
+```
 
-- Distributed Systems
-- Rate Limiting
-- Backend Development
-- Redis Data Structures
-- API Design
-- Reliability Engineering
-- Scalability Patterns
-- Traffic Management
-- State Management
-- System Design Fundamentals
+Response:
+
+```json
+{
+  "allowed": true
+}
+```
+
+---
+
+## Example Flow
+
+Request 1
+
+```json
+{
+  "allowed": true
+}
+```
+
+Request 2
+
+```json
+{
+  "allowed": true
+}
+```
+
+Request 6 (after threshold)
+
+```json
+{
+  "allowed": false
+}
+```
+
+---
+
+## Reliability Considerations
+
+This project focuses on concepts commonly used in Site Reliability Engineering and Platform Engineering:
+
+- Distributed state management
+- Request throttling
+- Traffic protection
+- Redis performance optimization
+- Service reliability
+- Backend scalability
+- Fault tolerance principles
+- Production observability
+
+---
+
+## Future Enhancements
+
+### Observability
+
+- Prometheus Metrics
+- Grafana Dashboards
+- Alerting Rules
+
+### Reliability
+
+- Circuit Breakers
+- Retry Logic
+- Failover Handling
+
+### Cloud Native
+
+- Docker
+- Kubernetes
+- Helm Charts
+
+### DevOps
+
+- GitHub Actions
+- Automated Testing
+- Continuous Deployment
+
+---
 
 ## Author
 
 **Gautam Solanki**
 
-LinkedIn: https://www.linkedin.com/in/gautam-solanki-84763520a/
+LinkedIn:
+https://www.linkedin.com/in/gautam-solanki-84763520a/
 
-GitHub: https://github.com/solankigautam18
+GitHub:
+https://github.com/solankigautam18
